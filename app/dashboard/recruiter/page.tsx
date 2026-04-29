@@ -1,11 +1,24 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import GmailConnect from "@/components/GmailConnect";
+import EmailFeed from "@/components/EmailFeed";
 
 export default async function RecruiterDashboard() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
   if (session.user.role === "CANDIDATE") redirect("/dashboard/candidate");
+
+  const profile = await prisma.recruiterProfile.findUnique({
+    where: { userId: session.user.id },
+    include: {
+      rawEmails: {
+        orderBy: { receivedAt: "desc" },
+        take: 20,
+      },
+    },
+  });
 
   return (
     <div>
@@ -14,17 +27,16 @@ export default async function RecruiterDashboard() {
         Processed recruiter emails and AI classifications
       </p>
 
-      <div
-        className="rounded-xl border border-white/5 p-6"
-        style={{ background: "#1a1a2e" }}
-      >
-        <p className="text-sm text-gray-400">
-          Connect your Gmail account to start ingesting emails.
-        </p>
-        <p className="text-xs text-gray-600 mt-2">
-          Feature 3 — Gmail OAuth + ingestion coming next.
-        </p>
+      <div className="mb-6">
+        <GmailConnect
+          connected={profile?.gmailConnected ?? false}
+          gmailEmail={profile?.gmailEmail ?? null}
+        />
       </div>
+
+      {profile?.rawEmails && profile.rawEmails.length > 0 && (
+        <EmailFeed emails={profile.rawEmails} />
+      )}
     </div>
   );
 }

@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  RECRUITER
+  CANDIDATE
+}
+
+enum EmailClassification {
+  GENUINE
+  PHISHING
+  PENDING
+}
+
+enum JobStatus {
+  PUBLISHED
+  DRAFT
+  ARCHIVED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(CANDIDATE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recruiterProfile RecruiterProfile?
+
+  @@map("users")
+}
+
+model RecruiterProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  gmailConnected  Boolean  @default(false)
+  gmailEmail      String?
+  gmailTokenJson  String?
+  lastPolledAt    DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rawEmails  RawEmail[]
+  jobs       Job[]
+
+  @@map("recruiter_profiles")
+}
+
+model RawEmail {
+  id               String              @id @default(cuid())
+  recruiterId      String
+  gmailMessageId   String              @unique
+  subject          String?
+  fromEmail        String?
+  fromName         String?
+  bodyText         String?
+  bodyHtml         String?
+  receivedAt       DateTime?
+  classification   EmailClassification @default(PENDING)
+  classifiedAt     DateTime?
+  createdAt        DateTime            @default(now())
+
+  recruiter    RecruiterProfile @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  job          Job?
+  flaggedEmail FlaggedEmail?
+
+  @@map("raw_emails")
+}
+
+model Job {
+  id          String    @id @default(cuid())
+  recruiterId String
+  rawEmailId  String?   @unique
+  title       String
+  company     String?
+  pay         String?
+  location    String?
+  workType    String?
+  description String?
+  contactEmail  String?
+  contactPhone  String?
+  linkedinUrl   String?
+  applyLinks    String[]
+  status      JobStatus @default(PUBLISHED)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  recruiter RecruiterProfile @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  rawEmail  RawEmail?        @relation(fields: [rawEmailId], references: [id])
+
+  @@map("jobs")
+}
+
+model FlaggedEmail {
+  id         String   @id @default(cuid())
+  rawEmailId String   @unique
+  reason     String?
+  notifiedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  rawEmail RawEmail @relation(fields: [rawEmailId], references: [id], onDelete: Cascade)
+
+  @@map("flagged_emails")
+}

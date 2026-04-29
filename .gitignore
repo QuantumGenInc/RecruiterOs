@@ -1,4 +1,12 @@
-echo ".env" >> .gitignore
-echo ".env.local" >> .gitignore
-echo "node_modules" >> .gitignore
-echo ".next" >> .gitignore
+.env
+.env.local
+.env*.local
+node_modules
+.next
+*.pem
+npm-debug.log*
+.DS_Store
+.vercel
+.playwright-browsers
+test-results/
+playwright-report/

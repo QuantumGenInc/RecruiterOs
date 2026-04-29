@@ -4,7 +4,7 @@
 - Next.js 14 App Router, TypeScript, Tailwind CSS
 - Prisma ORM, Supabase PostgreSQL
 - NextAuth.js (email+password)
-- Claude AI (claude-sonnet-4-20250514)
+- Claude AI (claude-sonnet-4-5)
 - Gmail API (OAuth2)
 - Resend (email)
 - Playwright (E2E tests)
